@@ -91,6 +91,9 @@ ENV/
 .spyderproject
 .spyproject
 
+# VIM
+*.swp
+
 # Rope project settings
 .ropeproject
 
