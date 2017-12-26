@@ -1,3 +1,3 @@
 #!/bin/sh
 
-pytest
+python -m pytest -s --cov-report term-missing --cov=weather tests/

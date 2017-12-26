@@ -1,1 +1,5 @@
 simpy==3.0.10
+pytest
+pytest-cov
+pytest-html
+enum34
