@@ -28,7 +28,7 @@ class WeatherStationTest(unittest.TestCase):
         runtime = number_of_readings * interval_length
         self.environment.run(until=runtime)
 
-        expected_weather = range(number_of_readings)
+        expected_weather = list(range(number_of_readings))
         self.assertEqual(expected_weather, self.fake_queue.data)
 
 

@@ -22,7 +22,7 @@ def update_weather(weather_state):
 
 class BroadcastPipe(object):
     """A Broadcast pipe that allows one process to send messages to many.
-    Frome the Simpy documentation and hence not tested:
+    Frome the Simpy documentation and hence not tested directly:
         http://simpy.readthedocs.io/en/latest/examples/process_communication.html
 
     """
