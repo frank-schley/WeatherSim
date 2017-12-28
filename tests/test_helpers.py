@@ -86,10 +86,12 @@ class TestWeatherTransformation(unittest.TestCase):
                                                    temperature=1,
                                                    pressure=1000,
                                                    humidity=1)
+        def pressure_identity(temp, alt):
+            return 1000
 
         transformer = helpers.build_transformer(conditions_updater=identity,
                                                 temperature_updater=identity,
-                                                pressure_updater=identity,
+                                                pressure_updater=pressure_identity,
                                                 humidity_updater=identity)
         self.assertEqual(base_weather, transformer(base_weather))
 
@@ -97,7 +99,14 @@ class TestWeatherTransformation(unittest.TestCase):
 
 class TestPressureCalculation(unittest.TestCase):
     def test_standard_values(self):
-       print(helpers.pressure(temperature=15, altitude=0))
+        # Test values taken from https://en.wikipedia.org/wiki/Barometric_formula
+        self.assertAlmostEqual(measurements.STANDARD_PRESSURE,
+                                helpers.pressure(temperature=15, altitude=0),
+                                delta=0.005)
+
+        self.assertAlmostEqual(226.321,
+                                helpers.pressure(temperature=15, altitude=11000),
+                                delta=0.05)
 
 
 def identity(x):

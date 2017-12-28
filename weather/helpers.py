@@ -45,7 +45,7 @@ def build_transformer(conditions_updater,
         local_time = weather_reading.local_time
         conditions = conditions_updater(weather_reading.conditions)
         temperature = temperature_updater(weather_reading.temperature)
-        pressure = pressure_updater(weather_reading.pressure)
+        pressure = pressure_updater(temperature, altitude)
         humidity = humidity_updater(weather_reading.humidity)
 
         return measurements.WeatherReading(station,
@@ -70,7 +70,8 @@ def temperature_updater(day_of_year, temperature):
 
 def pressure(temperature, altitude):
     '''Approximates the barometric pressure in hpa
-    Sources: - https://en.wikipedia.org/wiki/Barometric_formula
+    Sources: - A Quick Derivation relating altitude to air pressure
+               from ortland State Aerospace Society, Version 1.03, 12/22/2004
              - https://opentextbc.ca/chemistry
     Args:
         temperature (double): temperature in celcius
@@ -79,33 +80,19 @@ def pressure(temperature, altitude):
     Return:
         (double): barometric pressure in hpa
     '''
-    t = to_kelvin(celcius=15)
-    p = to_pa(hpa=measurements.STANDARD_PRESSURE)
-    l = to_kelvin(celcius=measurements.LAPSE_RATE)
-    g = measurements.GRAVITATIONAL_CONSTANT
-    m = measurements.MOLAR_MASS_EARTH
-    h = 11000 # height at bottom of layer in meters
-    r = measurements.GAS_CONSTANT
-    t = to_kelvin(celcius=15)
 
-    def barometric(altitude):
-        return p * math.pow(1 - (l * altitude / t), (g * m) / (r * l))
+    def to_pressure(altitude):
+        return 100 * ((44331.514 - altitude) / 11880.516) ** (1 / 0.1902632)
 
-    def adjust_temperature(pressure, temperature):
-        return (barometric(altitude) * temperature) / t
+    def adjust_for_temperature(pressure, temperature):
+        t = 15 # Degrees celcius
+        return (pressure * temperature) / t
 
-    pressure = adjust_temperature(barometric(altitude),
-                                  to_kelvin(temperature))
+    pressure = adjust_for_temperature(to_pressure(altitude),
+                                      temperature)
     return to_hpa(pressure)
 
 
-def to_pa(hpa):
-    return 100 * hpa
-
 def to_hpa(pa):
     return pa / 100.0
-
-
-def to_kelvin(celcius):
-    return celcius + measurements.KELVIN_AT_ZERO_CELCIUS
 
