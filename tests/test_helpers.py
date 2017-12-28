@@ -96,6 +96,23 @@ class TestWeatherTransformation(unittest.TestCase):
         self.assertEqual(base_weather, transformer(base_weather))
 
 
+class TestNextTemperature(unittest.TestCase):
+
+    def test_basics(self):
+
+        def return_two(a=None):
+            return 2
+
+        self.assertEqual(4, helpers.next_temperature(day_of_year=None,
+                                                     temperature=1,
+                                                     variation=return_two,
+                                                     season=return_two))
+        self.assertEqual(8, helpers.next_temperature(day_of_year=None,
+                                                     temperature=2,
+                                                     variation=return_two,
+                                                     season=return_two))
+
+
 
 class TestPressureCalculation(unittest.TestCase):
     def test_standard_values(self):

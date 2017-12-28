@@ -64,8 +64,18 @@ def build_transformer(conditions_updater,
 
 humidity_updater = functools.partial(random.uniform,20,100)
 
-def temperature_updater(day_of_year, temperature):
-    return temperature
+
+def next_temperature(day_of_year, temperature, variation, season):
+    '''Calculate the next temperature
+    Args:
+        day_of_year (integer): first of jan is day 1
+        temperature (double): current temperature
+        variation (function): introduces potential randomness
+        season (function: int -> double): returns coefficent for seasonality
+    Returns:
+        (double): next temperature
+    '''
+    return variation() * season(day_of_year) * temperature
 
 
 def pressure(temperature, altitude):
@@ -77,7 +87,7 @@ def pressure(temperature, altitude):
         temperature (double): temperature in celcius
         altitude (double): height above sealevel in meters
 
-    Return:
+    Returns:
         (double): barometric pressure in hpa
     '''
 
