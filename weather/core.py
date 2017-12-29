@@ -12,8 +12,10 @@ def weather_station(environment, weather_state, schedule, msg_queue):
 
     Args:
         environment (simpy.Environment): container for the simulation
-        weather_state ((transformer), (WeatherReading)): Current state of the weather station
-        schedule (function: -> double): generates the intervals at which the station emits data
+        weather_state ((transformer), (WeatherReading)):
+            Current state of the weather station
+        schedule (function: -> double):
+            generates the intervals at which the station emits data
     """
 
     while True:
@@ -26,7 +28,8 @@ def update_weather(weather_state):
     """Generate next weather state
 
     Args:
-        weather_state ((transformer), (WeatherReading)): Current state of the weather station
+        weather_state ((transformer), (WeatherReading)):
+            Current state of the weather station
 
     Returns:
         (transformer, WeatherReading): Next state of the weather station
@@ -53,7 +56,8 @@ class BroadcastPipe(object):
         if not self.pipes:
             raise RuntimeError('There are no output pipes.')
         events = [store.put(value) for store in self.pipes]
-        return self.environment.all_of(events)  # Condition event for all "events"
+        # Condition event for all "events"
+        return self.environment.all_of(events)
 
     def get_output_conn(self):
         """Get a new output connection for this broadcast pipe.
@@ -87,5 +91,3 @@ class DataCollector(object):
         while True:
             msg = yield self.queue.get()
             self.put(msg)
-
-
