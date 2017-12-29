@@ -2,45 +2,89 @@
 # -*- coding: utf-8 -*-
 
 from configparser import SafeConfigParser
+import functools
 import random
 import simpy
 import weather
+from weather import helpers
+
 
 def get_config():
+    """Get the default config
+
+    Returns:
+        (SafeConfigParser): the configuration
+    """
     parser = SafeConfigParser()
     parser.read('config.ini')
     return parser
 
 
-def build_sim_with_collector(config):
+def build_sim_with_collector_and_screen_printer(config):
+    """Construct the simulation with:
+        - a data collector
+        - a screen printer that emits records to standard out
+
+    Args:
+        config (SafeConfigParser): the configuration
+
+    Returns (Simpy.Environment, DataCollector)
+    """
     environment = simpy.Environment()
     broadcast_queue = weather.BroadcastPipe(environment)
-    stations = build_stations(config.get('options', 'stations'),
-                              environment,
-                              broadcast_queue)
-    data_collector = weather.DataCollector(environment, broadcast_queue.get_output_conn())
+    attach_stations(config.get('options', 'stations'),
+                    environment,
+                    broadcast_queue)
+    data_collector = weather.DataCollector(environment,
+                                           broadcast_queue.get_output_conn())
+    environment.process(screen_printer(environment,
+                                       broadcast_queue.get_output_conn()))
     return environment, data_collector
 
 
-def build_stations(stations_file, environment, broadcast_queue):
+def screen_printer(environment, queue):
+    """Prints queued records to standard out
+
+    Args:
+        environment (simpy.Environment)
+        queue (simpy.Store): the message queue
+    """
+    while True:
+        msg = yield queue.get()
+        print(msg)
+
+
+def attach_stations(stations_file, environment, broadcast_queue):
+    """Build and attach the weather stations to the environment
+
+    Args:
+        stations_file (string): path to file
+        environment(simpy.Environment)
+        broadcast_queue (BroadcastPipe): the message queue
+    """
     records = weather.read_csv_file(stations_file)
-    stations = [build_station(rec, environment, schedule, broadcast_queue)
-                 for rec in records]
-    return stations
+    for rec in records:
+        build_and_attach_station(rec,
+                                 environment,
+                                 every_day_schedule,
+                                 broadcast_queue)
 
 
-def variation(number):
-    return number * random.gauss(mu=1, sigma=0.05)
+def build_and_attach_station(record, environment, schedule, msg_queue):
+    """Build and attach the weather station to the environment
 
+    Args:
+        record (dict): a line from the stations_file
+        environment(simpy.Environment)
+        msg_queue (BroadcastPipe): the message queue
+    """
 
-
-
-def build_station(record, environment,schedule, msg_queue):
     conditions_updater = weather.weather_condition
-    temperature_updater = weather.build_temperature_updater(variation,
-                                                            float(record['hottest_day']),
-                                                            float(record['low_temp']),
-                                                            float(record['high_temp']))
+    temperature_updater = weather.build_temperature_updater(
+                                                variation,
+                                                float(record['hottest_day']),
+                                                float(record['low_temp']),
+                                                float(record['high_temp']))
     pressure_updater = weather.pressure
     humidity_updater = weather.humidity_updater
     transformer = weather.build_transformer(environment,
@@ -55,7 +99,7 @@ def build_station(record, environment,schedule, msg_queue):
         data = {'station': record['station'],
                 'latitude': float(record['latitude']),
                 'longitude': float(record['longitude']),
-                'altitude': altitude ,
+                'altitude': altitude,
                 'local_time': environment.now,
                 'conditions': weather.WeatherCondition.Sunny,
                 'temperature': temperature,
@@ -65,34 +109,53 @@ def build_station(record, environment,schedule, msg_queue):
 
     reading = to_weather_reading(record)
     weather_state = (transformer, to_weather_reading(record))
-    station = weather.weather_station(environment, weather_state, schedule, msg_queue)
+    station = weather.weather_station(environment,
+                                      weather_state,
+                                      schedule,
+                                      msg_queue)
     environment.process(station)
     return station
 
 
+def every_day_schedule():
+    """Schedule according to which data is emmitted from the weather station
 
-def to_weather_condition(word):
-    conditions = {'sunny': weather.WeatherCondition.Sunny,
-                  'clouds': weather.WeatherCondition.Clouds,
-                  'rain': weather.WeatherCondition.Rain,
-                  'snow': weather.WeatherCondition.Snow}
-    return conditions[word.lower().strip()]
-
-def schedule():
+    Returns:
+        (int): the schedule interval
+    """
     return 1
 
 
-def run(simulation, runtime):
-    simulation.run(until=float(runtime))
+def variation(number):
+    """Introduce some random variation
+    Args:
+        number (double)
+
+    Returns:
+        (double)
+    """
+    return number * random.gauss(mu=1, sigma=0.05)
+
+
+def write_to_file(output_file, data):
+    """Write the data to file
+
+    Args:
+        output_file (string): output file for data
+        data (list[WeatherReading]): simulation data
+    """
+    line_proc = functools.partial(
+                    helpers.weather_reading_to_report_line, sep='|')
+    helpers.write_data(data, output_file, line_proc)
 
 
 def main():
     config = get_config()
-    simulation, data_collector = build_sim_with_collector(config)
+    simulation, data_collector = build_sim_with_collector_and_screen_printer(
+                                                                        config)
     simulation.run(until=config.get('options', 'runtime'))
-    for record in data_collector.data:
-        print(record)
+    write_to_file(config.get('options', 'output_file'), data_collector.data)
 
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main()

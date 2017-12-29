@@ -29,7 +29,7 @@ def update_weather(weather_state):
         weather_state ((transformer), (WeatherReading)): Current state of the weather station
 
     Returns:
-        ((transformer), (WeatherReading)): Next state of the weather station
+        (transformer, WeatherReading): Next state of the weather station
 
     """
     transformer, current_weather = weather_state
@@ -41,7 +41,6 @@ class BroadcastPipe(object):
     """A Broadcast pipe that allows one process to send messages to many.
     Frome the Simpy documentation and hence not tested directly:
         http://simpy.readthedocs.io/en/latest/examples/process_communication.html
-
     """
 
     def __init__(self, environment, capacity=simpy.core.Infinity):
@@ -59,7 +58,8 @@ class BroadcastPipe(object):
     def get_output_conn(self):
         """Get a new output connection for this broadcast pipe.
 
-        The return value is a :class:`~simpy.resources.store.Store`.
+        Returns:
+            (simpy.resources.store.Store): the queue
 
         """
         pipe = simpy.Store(self.environment, capacity=self.capacity)
@@ -68,6 +68,9 @@ class BroadcastPipe(object):
 
 
 class DataCollector(object):
+    """Collect records during the simulation from the msg_queue
+    and make them available after the run
+    """
     def __init__(self, environment, msg_queue):
         self.queue = msg_queue
         self._data = []

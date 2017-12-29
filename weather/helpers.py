@@ -94,7 +94,6 @@ def build_transformer(environment,
                                         prev_pressure=weather_reading.pressure,
                                         curr_pressure=pressure)
         humidity = humidity_updater()
-
         return measurements.WeatherReading(station,
                                            latitude,
                                            longitude,
