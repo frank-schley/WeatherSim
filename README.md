@@ -1,7 +1,14 @@
 # WeatherSim
 
+This project demonstrates how to model weather stations and handle their output using a discrete event simulation.
+
+The general idea is that weather stations send readings to a message queue to which interested parties can subscribe.
+This is a very flexible approach and creates natural seams for testing and extension, even in the face of randomness.
+
+
 ## Prerequisites
-- internet connectivity
+- Internet connectivity
+
     pip3 will pull the project dependencies automatically, but this requires internet access.
 - python 3 (tested on python 3.6.3)
 - virtualenv
@@ -14,9 +21,13 @@
 ## Testing
 1. Ensure `run_tests.sh` has execution permissions
 2. Execute: `./run_tests`
+3. A small report will be printed. All Tests should pass with 99% test coverage.
 
 ## Running the project
 1. Ensure `run_sim.py` has execution permissions
 2. Modify `config.ini` to control configuration
 2. Execute: `./run_sim.py`
+
+## Design goals
+To have fun and explore TDD for building simulations.
 
