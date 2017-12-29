@@ -3,6 +3,7 @@
 This project demonstrates how to model weather stations and handle their output using a discrete event simulation.
 
 The general idea is that weather stations send readings to a message queue to which interested parties can subscribe.
+The current setup has two subscribers, a data collector for batch processing and a 'realtime' process for writing to standard out.
 This is a very flexible approach and creates natural seams for testing and extension, even in the face of randomness.
 
 
