@@ -68,17 +68,19 @@ def build_transformer(environment,
 
     Args:
         environment (simpy.Environment): Containter for the simulation
-        conditions_updater (function (double, double, double) -> measurements.WeatherCondition:
-            a function that takes a temperature, current pressure and previous pressure
-            to determine the weather condition
+        conditions_updater (function (double, double, double) ->
+                measurements.WeatherCondition:
+            a function that takes a temperature, current pressure
+            and previous pressure to determine the weather condition
         temperature_updater (function (double) -> double):
             a function that takes the day_of_year to determine the temperature
         humidity_updater (function: () -> double):
-            a function that takes no parameters and provides the humidity reading
+            a function that takes no parameters and provides the next reading
 
     Returns:
         (function (WeatherReading) -> WeatherReading):
-            given the previous WeatherReading calculate the current WeatherReading
+            given the previous WeatherReading calculate
+            the current WeatherReading
     """
 
     def transformer(weather_reading):
@@ -107,7 +109,7 @@ def build_transformer(environment,
 
 
 """No arg function to get a humidity reading """
-humidity_updater = functools.partial(random.uniform,20,100)
+humidity_updater = functools.partial(random.uniform, 20, 100)
 
 
 def temperature(day_of_year, hottest_day, low_temp, high_temp):
@@ -127,7 +129,8 @@ def temperature(day_of_year, hottest_day, low_temp, high_temp):
     """
     average_temp = mean([low_temp, high_temp])
     amplitude = average_temp - low_temp
-    return amplitude * math.cos((2 * math.pi / 365) * (day_of_year - hottest_day)) + average_temp
+    return amplitude * math.cos((2 * math.pi / 365) *
+                                (day_of_year - hottest_day)) + average_temp
 
 
 def build_temperature_updater(variation, hottest_day, low_temp, high_temp):
@@ -158,7 +161,8 @@ def build_temperature_updater(variation, hottest_day, low_temp, high_temp):
 
 def weather_condition(temperature, prev_pressure, curr_pressure):
     '''Determine weather condition as a function of temperature and pressure change
-    With some artistic license inspired by http://www.bohlken.net/airpressure2.htm
+    With some artistic license inspired by
+    http://www.bohlken.net/airpressure2.htm
 
     Args:
         temperature (double): temperature in celcius
@@ -167,19 +171,19 @@ def weather_condition(temperature, prev_pressure, curr_pressure):
     Returns:
         (measurements.WeatherCondition)
     '''
-    delta = curr_pressure  - prev_pressure
+    delta = curr_pressure - prev_pressure
     down_threshold = -10
     up_threshold = 10
 
     if down_threshold < delta <= up_threshold:
         return measurements.WeatherCondition.Sunny
     elif delta < down_threshold:
-        if temperature < 0: return measurements.WeatherCondition.Snow
-        else: return measurements.WeatherCondition.Rain
+        if temperature < 0:
+            return measurements.WeatherCondition.Snow
+        else:
+            return measurements.WeatherCondition.Rain
     else:
         return measurements.WeatherCondition.Clouds
-
-
 
 
 def pressure(temperature, altitude):
@@ -199,7 +203,7 @@ def pressure(temperature, altitude):
         return 100 * ((44331.514 - altitude) / 11880.516) ** (1 / 0.1902632)
 
     def adjust_for_temperature(pressure, temperature):
-        t = 15 # Degrees celcius
+        t = 15  # Degrees celcius
         return (pressure * temperature) / t
 
     pressure = adjust_for_temperature(to_pressure(altitude),
