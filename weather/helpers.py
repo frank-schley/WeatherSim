@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
+from statistics import mean
+from weather import measurements
 import csv
 import functools
-import random
 import math
-from weather import measurements
-from statistics import mean
+import random
 
 
 def weather_reading_to_report_line(reading, sep):
-    """Generate a report line give a WeatherReading
+    """Generate a report line given a WeatherReading
 
     Args:
         reading (WeatherReading): A weather reading
@@ -69,7 +69,7 @@ def build_transformer(environment,
     Args:
         environment (simpy.Environment): Containter for the simulation
         conditions_updater (function (double, double, double) ->
-                measurements.WeatherCondition:
+                                        measurements.WeatherCondition:
             a function that takes a temperature, current pressure
             and previous pressure to determine the weather condition
         temperature_updater (function (double) -> double):
