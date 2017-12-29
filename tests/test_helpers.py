@@ -76,7 +76,7 @@ class TestReadCSVFile(unittest.TestCase):
 
 class TestWeatherTransformation(unittest.TestCase):
     def test_should_not_transform_under_identity_function(self):
-        def pressure_fake(temp, alt):
+        def pressure_fake(alt):
             return 1000
 
         def weather_condition_fake(temperature, prev_pressure, curr_pressure):
@@ -199,11 +199,11 @@ class TestPressureCalculation(unittest.TestCase):
     def test_standard_values(self):
         # Test values taken from https://en.wikipedia.org/wiki/Barometric_formula
         self.assertAlmostEqual(measurements.STANDARD_PRESSURE,
-                                helpers.pressure(temperature=15, altitude=0),
-                                delta=0.005)
+                                helpers.pressure(altitude=0),
+                                delta=0.05)
 
         self.assertAlmostEqual(226.321,
-                                helpers.pressure(temperature=15, altitude=11000),
+                                helpers.pressure(altitude=11000),
                                 delta=0.05)
 
 

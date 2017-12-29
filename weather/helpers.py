@@ -74,6 +74,8 @@ def build_transformer(environment,
             and previous pressure to determine the weather condition
         temperature_updater (function (double) -> double):
             a function that takes the day_of_year to determine the temperature
+        pressure_updater (function (double) -> double):
+            a function that provides the next reading given an altitude
         humidity_updater (function: () -> double):
             a function that takes no parameters and provides the next reading
 
@@ -90,7 +92,7 @@ def build_transformer(environment,
         altitude = weather_reading.altitude
         local_time = environment.now
         temperature = temperature_updater(day_of_year=local_time)
-        pressure = pressure_updater(temperature, altitude)
+        pressure = pressure_updater(altitude)
 
         conditions = conditions_updater(temperature,
                                         prev_pressure=weather_reading.pressure,
@@ -186,13 +188,11 @@ def weather_condition(temperature, prev_pressure, curr_pressure):
         return measurements.WeatherCondition.Clouds
 
 
-def pressure(temperature, altitude):
+def pressure(altitude):
     '''Approximates the barometric pressure in hpa
     Sources: - A Quick Derivation relating altitude to air pressure
                from ortland State Aerospace Society, Version 1.03, 12/22/2004
-             - https://opentextbc.ca/chemistry
     Args:
-        temperature (double): temperature in celcius
         altitude (double): height above sealevel in meters
 
     Returns:
@@ -202,13 +202,7 @@ def pressure(temperature, altitude):
     def to_pressure(altitude):
         return 100 * ((44331.514 - altitude) / 11880.516) ** (1 / 0.1902632)
 
-    def adjust_for_temperature(pressure, temperature):
-        t = 15  # Degrees celcius
-        return (pressure * temperature) / t
-
-    pressure = adjust_for_temperature(to_pressure(altitude),
-                                      temperature)
-    return to_hpa(pressure)
+    return to_hpa(to_pressure(altitude))
 
 
 def to_hpa(pa):

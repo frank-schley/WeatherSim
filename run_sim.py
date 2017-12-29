@@ -6,8 +6,8 @@ import functools
 import random
 import simpy
 import weather
-from weather import helpers
 
+from weather import helpers
 
 def get_config():
     """Get the default config
@@ -62,7 +62,7 @@ def attach_stations(stations_file, environment, broadcast_queue):
         environment(simpy.Environment)
         broadcast_queue (BroadcastPipe): the message queue
     """
-    records = weather.read_csv_file(stations_file)
+    records = helpers.read_csv_file(stations_file)
     for rec in records:
         build_and_attach_station(rec,
                                  environment,
@@ -79,15 +79,15 @@ def build_and_attach_station(record, environment, schedule, msg_queue):
         msg_queue (BroadcastPipe): the message queue
     """
 
-    conditions_updater = weather.weather_condition
-    temperature_updater = weather.build_temperature_updater(
-                                                variation,
+    conditions_updater = helpers.weather_condition
+    temperature_updater = helpers.build_temperature_updater(
+                                                temperature_variation,
                                                 float(record['hottest_day']),
                                                 float(record['low_temp']),
                                                 float(record['high_temp']))
-    pressure_updater = weather.pressure
-    humidity_updater = weather.humidity_updater
-    transformer = weather.build_transformer(environment,
+    pressure_updater = compose(pressure_variation, helpers.pressure)
+    humidity_updater = helpers.humidity_updater
+    transformer = helpers.build_transformer(environment,
                                             conditions_updater,
                                             temperature_updater,
                                             pressure_updater,
@@ -103,7 +103,7 @@ def build_and_attach_station(record, environment, schedule, msg_queue):
                 'local_time': environment.now,
                 'conditions': weather.WeatherCondition.Sunny,
                 'temperature': temperature,
-                'pressure': pressure_updater(temperature, altitude),
+                'pressure': pressure_updater(altitude),
                 'humidity': humidity_updater()}
         return weather.WeatherReading(**data)
 
@@ -126,15 +126,30 @@ def every_day_schedule():
     return 1
 
 
-def variation(number):
+def temperature_variation(temperature):
     """Introduce some random variation
     Args:
-        number (double)
+        temperature (double)
 
     Returns:
         (double)
     """
-    return number * random.gauss(mu=1, sigma=0.05)
+    return temperature * random.gauss(mu=1, sigma=0.15)
+
+
+def pressure_variation(pressure):
+    """Introduce some random variation
+    Args:
+        pressure (double)
+
+    Returns:
+        (double)
+    """
+    return pressure * random.gauss(mu=1, sigma=0.02)
+
+
+def compose(f, g):
+    return lambda x: f(g(x))
 
 
 def write_to_file(output_file, data):
