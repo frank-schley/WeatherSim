@@ -8,13 +8,30 @@ WeatherState = namedtuple('WeatherState', ['transformer', 'weather'])
 
 
 def weather_station(environment, weather_state, schedule, msg_queue):
+    """A weather station represented by a generator function
+
+    Args:
+        environment (simpy.Environment): container for the simulation
+        weather_state ((transformer), (WeatherReading)): Current state of the weather station
+        schedule (function: -> double): generates the intervals at which the station emits data
+    """
+
     while True:
-       msg_queue.put(weather_state.weather)
-       weather_state = update_weather(weather_state)
-       yield environment.timeout(schedule())
+        msg_queue.put(weather_state[1])
+        weather_state = update_weather(weather_state)
+        yield environment.timeout(schedule())
 
 
 def update_weather(weather_state):
+    """Generate next weather state
+
+    Args:
+        weather_state ((transformer), (WeatherReading)): Current state of the weather station
+
+    Returns:
+        ((transformer), (WeatherReading)): Next state of the weather station
+
+    """
     transformer, current_weather = weather_state
     next_weather = transformer(current_weather)
     return WeatherState(transformer, next_weather)

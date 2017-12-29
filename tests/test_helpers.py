@@ -74,9 +74,25 @@ class TestReadCSVFile(unittest.TestCase):
             for record in records:
                 writer.writerow(record)
 
-
 class TestWeatherTransformation(unittest.TestCase):
     def test_should_not_transform_under_identity_function(self):
+        def pressure_fake(temp, alt):
+            return 1000
+
+        def weather_condition_fake(temperature, prev_pressure, curr_pressure):
+            return measurements.WeatherCondition.Sunny
+
+        def temperature_fake(day_of_year):
+            return 1
+
+        def humidity_fake():
+            return 1
+
+        class FakeEnv(object):
+            @property
+            def now(self):
+                return 10
+
         base_weather = measurements.WeatherReading(station='syd',
                                                    latitude=1,
                                                    longitude=1,
@@ -86,31 +102,96 @@ class TestWeatherTransformation(unittest.TestCase):
                                                    temperature=1,
                                                    pressure=1000,
                                                    humidity=1)
-        def pressure_identity(temp, alt):
-            return 1000
 
-        transformer = helpers.build_transformer(conditions_updater=identity,
-                                                temperature_updater=identity,
-                                                pressure_updater=pressure_identity,
-                                                humidity_updater=identity)
+        transformer = helpers.build_transformer(environment=FakeEnv(),
+                                                conditions_updater=weather_condition_fake,
+                                                temperature_updater=temperature_fake,
+                                                pressure_updater=pressure_fake,
+                                                humidity_updater=humidity_fake)
         self.assertEqual(base_weather, transformer(base_weather))
 
 
-class TestNextTemperature(unittest.TestCase):
+class TestTemperature(unittest.TestCase):
 
-    def test_basics(self):
+    def test_constant_temperature(self):
+        day_of_year = 0
+        hottest_day = 0
+        low_temp = 0
+        high_temp = 0
 
-        def return_two(a=None):
-            return 2
+        self.assertEqual(0, helpers.temperature(day_of_year, hottest_day, low_temp, high_temp))
 
-        self.assertEqual(4, helpers.next_temperature(day_of_year=None,
-                                                     temperature=1,
-                                                     variation=return_two,
-                                                     season=return_two))
-        self.assertEqual(8, helpers.next_temperature(day_of_year=None,
-                                                     temperature=2,
-                                                     variation=return_two,
-                                                     season=return_two))
+    def test_hottest_day(self):
+        day_of_year = 100
+        hottest_day = 100
+        low_temp = 0
+        high_temp = 10
+        self.assertAlmostEqual(high_temp,
+                               helpers.temperature(day_of_year, hottest_day, low_temp, high_temp),
+                               delta=0.01)
+
+    def test_coldest_day(self):
+        day_of_year = 182
+        hottest_day = 0
+        low_temp = 0
+        high_temp = 100
+        self.assertAlmostEqual(low_temp,
+                               helpers.temperature(day_of_year, hottest_day, low_temp, high_temp),
+                               delta=0.01)
+
+
+class TestTemperatureBuilder(unittest.TestCase):
+    def test_basic_usage(self):
+
+
+        hottest_day = 0
+        low_temp = 0
+        high_temp = 100
+        temp_update = helpers.build_temperature_updater(identity,
+                                                        hottest_day,
+                                                        low_temp,
+                                                        high_temp)
+        self.assertAlmostEqual(high_temp,
+                               temp_update(day_of_year=hottest_day),
+                               delta=0.01)
+
+
+class TestWeatherCondition(unittest.TestCase):
+    def test_no_pressure_should_should_be_sunny(self):
+        temperature = 10
+        current_pressure = 1000
+        previous_pressure = 1000
+        self.assertEqual(measurements.WeatherCondition.Sunny,
+                         helpers.weather_condition(temperature,
+                                                   previous_pressure,
+                                                   current_pressure))
+
+    def test_negative_change_should_be_rain_or_snow(self):
+        not_freezing = 0
+        current_pressure = 1000
+        previous_pressure = 1011
+        self.assertEqual(measurements.WeatherCondition.Rain,
+                         helpers.weather_condition(not_freezing,
+                                                   previous_pressure,
+                                                   current_pressure))
+        cold = -10
+        current_pressure = 1000
+        previous_pressure = 1011
+        self.assertEqual(measurements.WeatherCondition.Snow,
+                         helpers.weather_condition(cold,
+                                                   previous_pressure,
+                                                   current_pressure))
+
+    def test_positive_change_chould_be_clouds(self):
+        cold = -10
+        current_pressure = 1020
+        previous_pressure = 1000
+        self.assertEqual(measurements.WeatherCondition.Clouds,
+                         helpers.weather_condition(cold,
+                                                   previous_pressure,
+                                                   current_pressure))
+
+
 
 
 
@@ -132,6 +213,10 @@ def identity(x):
 
 def double_chars(x):
     return str(2 * x)
+
+
+def years(n):
+    return n * 365
 
 
 def read_contents(filename):

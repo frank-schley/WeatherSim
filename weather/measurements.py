@@ -19,6 +19,5 @@ WeatherReading = namedtuple('WeatherReading', ['station',
 class WeatherCondition(Enum):
     Sunny = 0
     Clouds = 1
-    HeavyClouds = 2
-    LightRain = 3
-    HeavyRain = 4
+    Rain = 2
+    Snow = 3
