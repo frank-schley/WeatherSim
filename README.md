@@ -1,6 +1,8 @@
 # WeatherSim
 
 ## Prerequisites
+- internet connectivity
+    pip3 will pull the project dependencies automatically, but this requires internet access.
 - python 3 (tested on python 3.6.3)
 - virtualenv
 - pip3
