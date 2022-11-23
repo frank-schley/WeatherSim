@@ -13,7 +13,7 @@ VIRTUALENV_DIR="${SCRIPT_DIR}/venv"
 
 # Instantiate the virtual envronment
 echo "Creating user virtual environment in the PROJECT_ROOT (${SCRIPT_DIR}) in directory called 'venv'"
-virtualenv --no-site-packages -p python3 "${VIRTUALENV_DIR}"
+virtualenv -p python3 "${VIRTUALENV_DIR}"
 
 echo "Stepping in to virtual environment in order to install dependencies"
 source "${VIRTUALENV_DIR}/bin/activate"
